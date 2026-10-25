@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="質問に答えるとニャ魔人があなたの好きな女性声優をズバリ言い当てる診断ゲーム（ファンメイド・非公式）">
+<meta property="og:title" content="好きな女性声優診断メーカー">
+<meta property="og:description" content="質問に答えると、ニャ魔人があなたの好きな女性声優をズバリ言い当てます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://xilyy.github.io/seiyu-shindan/">
+<meta name="twitter:card" content="summary">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>好きな女性声優診断メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one phone-width stage — seer on top, gauge in the middle, five answers stacked at thumb height */
+:root{
+  --bg:#F2F6EE;            /* pale matcha milk */
+  --surface:#FFFFFF;
+  --ink:#24301F;           /* deep matcha ink */
+  --muted:#66745F;
+  --line:#D6E0CF;
+  --matcha:#6E9A4B;
+  --pink:#E2577F;          /* strawberry accent */
+  --pink-soft:#FBE3EA;
+  --gold:#E8B54A;
+  --fur:#FFF7F2;
+  --fur-line:#3A2E33;
+  --ball:#CFE8F7;
+  --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121811;--surface:#1C241A;--ink:#EAF1E4;--muted:#A3B29A;--line:#2F3B2B;
+    --matcha:#93C26A;--pink:#F07A9C;--pink-soft:#3A2129;--gold:#F0C463;
+    --fur:#F3EAE4;--fur-line:#2A2125;--ball:#5C8AA8;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121811;--surface:#1C241A;--ink:#EAF1E4;--muted:#A3B29A;--line:#2F3B2B;
+  --matcha:#93C26A;--pink:#F07A9C;--pink-soft:#3A2129;--gold:#F0C463;
+  --fur:#F3EAE4;--fur-line:#2A2125;--ball:#5C8AA8;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px 28px;
+  background-image:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0);
+  background-size:22px 22px;
+}
+.app{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand{font-family:var(--display);font-size:1.05rem;letter-spacing:.02em;margin:0;line-height:1.3;text-wrap:balance}
+.brand small{display:block;font-family:var(--body);font-weight:700;font-size:.7rem;color:var(--muted);letter-spacing:.12em}
+.qno{font-size:.8rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* seer */
+.stage{display:grid;grid-template-columns:132px minmax(0,1fr);gap:10px;align-items:end}
+.seer{width:132px;height:150px}
+.seer svg{width:100%;height:100%;overflow:visible}
+.floaty{animation:float 3.2s ease-in-out infinite;transform-origin:center}
+@keyframes float{50%{transform:translateY(-5px)}}
+.seer [data-eyes]{display:none}
+.seer[data-mood="think"] [data-eyes="think"],
+.seer[data-mood="idle"] [data-eyes="idle"],
+.seer[data-mood="shock"] [data-eyes="shock"],
+.seer[data-mood="sweat"] [data-eyes="sweat"],
+.seer[data-mood="happy"] [data-eyes="happy"]{display:inline}
+.sweat{opacity:0;transition:opacity .2s}
+.seer[data-mood="sweat"] .sweat{opacity:1}
+.seer[data-mood="think"] .paw{transform:translate(0,-6px)}
+.paw{transition:transform .3s}
+.ballglow{transition:opacity .6s}
+.seer.wobble .floaty{animation:wobble .5s ease-in-out}
+@keyframes wobble{20%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}80%{transform:rotate(-2deg)}}
+
+.bubble{
+  position:relative;background:var(--surface);border:2px solid var(--ink);border-radius:18px 18px 18px 4px;
+  padding:10px 14px;font-weight:700;font-size:.92rem;line-height:1.5;min-height:64px;
+  display:flex;align-items:center;margin-bottom:22px;
+}
+.bubble::before{content:"";position:absolute;left:-10px;bottom:10px;width:14px;height:14px;background:var(--surface);
+  border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg) skew(10deg,10deg)}
+.bubble span{position:relative}
+
+/* gauge */
+.gauge{display:flex;flex-direction:column;gap:6px}
+.gauge-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.gauge-top b{font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--ink);letter-spacing:0;font-variant-numeric:tabular-nums}
+.track{position:relative;height:18px;border-radius:99px;background:var(--surface);border:2px solid var(--ink);overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--matcha),var(--gold) 60%,var(--pink));
+  transition:width .9s cubic-bezier(.3,1.4,.5,1)}
+.fill.dip{transition:width .5s ease-out}
+.ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),color-mix(in srgb,var(--ink) 18%,transparent) calc(10% - 2px) 10%)}
+.track.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+.track.hot{box-shadow:0 0 0 4px color-mix(in srgb,var(--pink) 30%,transparent)}
+.delta{font-size:.75rem;font-weight:700;height:1.1em;text-align:right;font-variant-numeric:tabular-nums}
+.delta.up{color:var(--matcha)} .delta.down{color:var(--pink)}
+
+/* question */
+.qcard{background:var(--surface);border:2px solid var(--ink);border-radius:20px;padding:18px 16px 16px;box-shadow:4px 4px 0 var(--ink)}
+.qlabel{font-size:.72rem;font-weight:900;letter-spacing:.16em;color:var(--pink);margin:0 0 4px}
+.qtext{font-family:var(--display);font-weight:400;font-size:1.3rem;line-height:1.45;margin:0;text-wrap:balance;min-height:2.9em}
+.answers{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.ans{
+  font:inherit;font-weight:700;font-size:1rem;color:var(--ink);background:var(--bg);
+  border:2px solid var(--ink);border-radius:14px;padding:12px 14px;text-align:left;cursor:pointer;
+  display:flex;align-items:center;gap:10px;transition:transform .08s,background .15s;
+}
+.ans i{font-style:normal;width:22px;height:22px;flex:none;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-size:.7rem}
+.ans:hover{background:var(--pink-soft)}
+.ans:active{transform:translateY(2px)}
+.ans:focus-visible,.btn:focus-visible,.link:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.ans:disabled{opacity:.55;cursor:default}
+.ans[data-k="yes"] i{background:var(--matcha)}
+.ans[data-k="py"] i{background:color-mix(in srgb,var(--matcha) 45%,var(--surface))}
+.ans[data-k="pn"] i{background:color-mix(in srgb,var(--pink) 35%,var(--surface))}
+.ans[data-k="no"] i{background:var(--pink)}
+
+.btn{
+  font:inherit;font-family:var(--display);font-size:1.1rem;color:#fff;background:var(--pink);
+  border:2px solid var(--ink);border-radius:16px;padding:14px 18px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);
+  text-align:center;text-decoration:none;display:block;width:100%
+}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn.ghost{background:var(--surface);color:var(--ink);font-family:var(--body);font-weight:900;font-size:1rem}
+.btn.x{background:var(--ink);color:var(--bg)}
+
+/* start */
+.intro{display:flex;flex-direction:column;gap:14px}
+.intro h2{font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1.35;margin:0;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);font-weight:500}
+.rules{display:flex;flex-wrap:wrap;gap:6px}
+.rules span{font-size:.74rem;font-weight:700;border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:3px 10px;color:var(--muted)}
+
+/* guess */
+.guess{text-align:center;display:flex;flex-direction:column;gap:12px;padding-block:4px}
+.guess .pre{font-weight:900;color:var(--muted);margin:0}
+.guess .name{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,12vw,3rem);line-height:1.15;margin:0;letter-spacing:.04em}
+.guess .ruby{font-size:.8rem;font-weight:900;letter-spacing:.3em;color:var(--pink);margin:0}
+.guess .post{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.reveal{animation:pop .7s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{transform:scale(.6);opacity:.2}}
+
+/* result */
+.result{display:flex;flex-direction:column;gap:14px}
+.portrait{
+  display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center;
+  background:var(--surface);border:2px solid var(--ink);border-radius:20px;padding:14px;box-shadow:4px 4px 0 var(--ink)
+}
+.frame{
+  aspect-ratio:2/3;max-width:100%;border-radius:12px;border:2px solid var(--ink);display:grid;place-items:center;text-align:center;
+  background:linear-gradient(160deg,var(--pink-soft),color-mix(in srgb,var(--matcha) 25%,var(--surface)));
+  text-decoration:none;color:var(--ink);font-size:.7rem;font-weight:900;line-height:1.4;padding:6px
+}
+.frame strong{display:block;font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1}
+.pname{font-family:var(--display);font-weight:400;font-size:1.6rem;line-height:1.2;margin:0}
+.pkana{font-size:.75rem;font-weight:900;letter-spacing:.2em;color:var(--pink);margin:0}
+.pagency{font-size:.82rem;color:var(--muted);font-weight:700;margin:4px 0 0}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:.9rem}
+.facts dt{font-weight:900;color:var(--muted);font-size:.78rem;letter-spacing:.08em;padding-top:2px}
+.facts dd{margin:0;font-weight:700}
+.section h3{font-size:.78rem;letter-spacing:.16em;color:var(--pink);margin:0 0 6px;font-weight:900}
+.sched{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.sched li{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:8px;font-weight:700}
+.sched time{font-variant-numeric:tabular-nums;color:var(--matcha);font-weight:900}
+.note{font-size:.72rem;color:var(--muted);margin:6px 0 0}
+.links{display:flex;flex-direction:column;gap:8px}
+.link{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:var(--ink);
+  background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:11px 14px;font-weight:700
+}
+.link small{display:block;font-size:.72rem;color:var(--muted);font-weight:700}
+.link .arr{font-family:var(--display);color:var(--pink)}
+.share{display:flex;flex-direction:column;gap:8px}
+.copied{font-size:.78rem;color:var(--matcha);font-weight:900;text-align:center;min-height:1.2em;margin:0}
+footer{font-size:.7rem;color:var(--muted);text-align:center;line-height:1.6}
+@media (prefers-reduced-motion: reduce){
+  .floaty,.reveal,.track.shake,.seer.wobble .floaty{animation:none}
+  .fill{transition:none}
+}
+</style>
+</head>
+<body>
+
+
+<div class="app" id="app">
+  <header>
+    <h1 class="brand"><small>ニャ魔人が見抜く</small>好きな女性声優診断メーカー</h1>
+    <span class="qno" id="qno" hidden>Q.1</span>
+  </header>
+
+  <div class="stage">
+    <div class="seer" id="seer" data-mood="idle" aria-hidden="true">
+      <svg viewBox="0 0 200 230">
+        <defs>
+          <radialGradient id="ballg" cx="40%" cy="35%" r="70%">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".95"/>
+            <stop offset=".5" style="stop-color:var(--ball)"/>
+            <stop offset="1" style="stop-color:var(--matcha)"/>
+          </radialGradient>
+          <radialGradient id="glowg">
+            <stop offset="0" stop-opacity=".85" style="stop-color:var(--pink)"/>
+            <stop offset="1" stop-opacity="0" style="stop-color:var(--pink)"/>
+          </radialGradient>
+        </defs>
+        <g class="floaty">
+          <!-- smoke tail -->
+          <path d="M100 150 C 70 170, 60 200, 92 214 C 110 222, 128 210, 116 198 C 108 190, 96 198, 102 204" fill="none" stroke-width="10" stroke-linecap="round" opacity=".55" style="stroke:var(--pink)"/>
+          <!-- body / robe -->
+          <path d="M58 150 Q 100 120 142 150 L 132 176 Q 100 190 68 176 Z" stroke-width="3" stroke-linejoin="round" style="fill:var(--matcha);stroke:var(--fur-line)"/>
+          <!-- ears -->
+          <path d="M52 62 L 46 18 L 84 44 Z" stroke-width="3" stroke-linejoin="round" style="fill:var(--fur);stroke:var(--fur-line)"/>
+          <path d="M148 62 L 154 18 L 116 44 Z" stroke-width="3" stroke-linejoin="round" style="fill:var(--fur);stroke:var(--fur-line)"/>
+          <path d="M56 50 L 54 30 L 72 44 Z" opacity=".7" style="fill:var(--pink)"/>
+          <path d="M144 50 L 146 30 L 128 44 Z" opacity=".7" style="fill:var(--pink)"/>
+          <!-- head -->
+          <ellipse cx="100" cy="92" rx="58" ry="52" stroke-width="3" style="fill:var(--fur);stroke:var(--fur-line)"/>
+          <!-- headband with gem -->
+          <path d="M46 70 Q 100 44 154 70" fill="none" stroke-width="9" stroke-linecap="round" style="stroke:var(--pink)"/>
+          <path d="M100 48 l 9 10 -9 10 -9 -10 z" stroke-width="2.5" stroke-linejoin="round" style="fill:var(--gold);stroke:var(--fur-line)"/>
+          <!-- cheeks -->
+          <ellipse cx="66" cy="110" rx="9" ry="5" opacity=".35" style="fill:var(--pink)"/>
+          <ellipse cx="134" cy="110" rx="9" ry="5" opacity=".35" style="fill:var(--pink)"/>
+          <!-- eyes variants -->
+          <g data-eyes="idle" style="fill:var(--fur-line)">
+            <ellipse cx="78" cy="94" rx="6" ry="8"/><ellipse cx="122" cy="94" rx="6" ry="8"/>
+            <circle cx="80" cy="91" r="2" fill="#fff"/><circle cx="124" cy="91" r="2" fill="#fff"/>
+          </g>
+          <g data-eyes="think" fill="none" stroke-width="3.5" stroke-linecap="round" style="stroke:var(--fur-line)">
+            <path d="M70 96 Q 78 90 86 96"/><path d="M114 92 L 130 92"/>
+          </g>
+          <g data-eyes="shock" style="fill:var(--fur-line)">
+            <circle cx="78" cy="94" r="9"/><circle cx="122" cy="94" r="9"/>
+            <circle cx="81" cy="90" r="3.5" fill="#fff"/><circle cx="125" cy="90" r="3.5" fill="#fff"/>
+            <path d="M100 70 l2 -8 2 8 8 2 -8 2 -2 8 -2 -8 -8 -2z" transform="translate(30 -6)" style="fill:var(--gold)"/>
+          </g>
+          <g data-eyes="sweat" fill="none" stroke-width="3.5" stroke-linecap="round" style="stroke:var(--fur-line)">
+            <path d="M70 90 L 84 98 M70 98 L 84 90"/><path d="M116 90 L 130 98 M116 98 L 130 90"/>
+          </g>
+          <g data-eyes="happy" fill="none" stroke-width="3.5" stroke-linecap="round" style="stroke:var(--fur-line)">
+            <path d="M70 98 Q 78 86 86 98"/><path d="M114 98 Q 122 86 130 98"/>
+          </g>
+          <!-- nose & mouth -->
+          <path d="M96 106 h8 l-4 4 z" style="fill:var(--pink)"/>
+          <path d="M92 114 q 4 5 8 0 q 4 5 8 0" fill="none" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--fur-line)"/>
+          <!-- whiskers -->
+          <g stroke-width="2" stroke-linecap="round" opacity=".7" style="stroke:var(--fur-line)">
+            <path d="M52 104 l-16 -3 M52 112 l-16 3"/><path d="M148 104 l16 -3 M148 112 l16 3"/>
+          </g>
+          <!-- sweat -->
+          <path class="sweat" d="M150 70 q 7 10 0 14 q -7 -4 0 -14z" stroke-width="2" style="fill:var(--ball);stroke:var(--fur-line)"/>
+          <!-- crystal ball -->
+          <circle class="ballglow" id="ballglow" cx="100" cy="170" r="44" fill="url(#glowg)" opacity="0"/>
+          <circle cx="100" cy="168" r="26" fill="url(#ballg)" stroke-width="3" style="stroke:var(--fur-line)"/>
+          <path d="M80 192 h40 l-6 10 h-28 z" stroke-width="3" stroke-linejoin="round" style="fill:var(--gold);stroke:var(--fur-line)"/>
+          <!-- paws -->
+          <g class="paw">
+            <ellipse cx="72" cy="168" rx="11" ry="9" stroke-width="3" style="fill:var(--fur);stroke:var(--fur-line)"/>
+          </g>
+          <ellipse cx="128" cy="168" rx="11" ry="9" stroke-width="3" style="fill:var(--fur);stroke:var(--fur-line)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="bubble" id="bubble" aria-live="polite"><span id="say">思い浮かべた女性声優さんを、ワガハイが当ててみせるニャ。</span></div>
+  </div>
+
+  <section class="gauge" id="gaugeWrap" hidden>
+    <div class="gauge-top"><span>ひらめきゲージ</span><b id="pct">0%</b></div>
+    <div class="track" id="track"><div class="fill" id="fill"></div><div class="ticks"></div></div>
+    <div class="delta" id="delta"></div>
+  </section>
+
+  <!-- start -->
+  <section class="intro" id="vStart">
+    <h2>好きな女性声優さんを、<br>ひとり思い浮かべて。</h2>
+    <p>ランダムに出る質問に答えていくと、ニャ魔人の「ひらめきゲージ」がたまっていきます。満タンになったら、その名前をズバリ言い当てます。</p>
+    <div class="rules"><span>回答は5択</span><span>6問で診断</span><span>結果はXでシェア</span></div>
+    <button class="btn" id="startBtn" type="button">診断をはじめる</button>
+  </section>
+
+  <!-- question -->
+  <section class="qcard" id="vQ" hidden>
+    <p class="qlabel" id="qlabel">QUESTION</p>
+    <p class="qtext" id="qtext"></p>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- result -->
+  <section class="result" id="vResult" hidden>
+    <div class="qcard guess">
+      <p class="pre">診断結果　あなたが好きな女性声優は…</p>
+      <div class="reveal" id="reveal">
+        <p class="ruby">はまかわ めいな</p>
+        <p class="name">濵川明那</p>
+      </div>
+      <p class="post">さんです！</p>
+      <p class="pre" id="qcount"></p>
+    </div>
+    <div class="portrait">
+      <a class="frame" href="https://www.stardust.co.jp/talent/voiceactor/hamakawameina/" target="_blank" rel="noopener">
+        <span><strong>濵</strong>公式写真を<br>見る ↗</span>
+      </a>
+      <div style="min-width:0">
+        <p class="pkana">HAMAKAWA MEINA</p>
+        <p class="pname">濵川明那</p>
+        <p class="pagency">スターダストプロモーション 声優部</p>
+      </div>
+    </div>
+
+    <div class="qcard section">
+      <h3>PROFILE</h3>
+      <dl class="facts">
+        <dt>誕生日</dt><dd>5月15日</dd>
+        <dt>出身地</dt><dd>埼玉県</dd>
+        <dt>趣味</dt><dd>楽器演奏・アイスを食べること・麻雀</dd>
+        <dt>特技</dt><dd>サクソフォン演奏・プレゼン</dd>
+        <dt>出演</dt><dd>舞台「少女☆歌劇 レヴュースタァライト -The STAGE 中等部-」皇撫子 役／TVアニメ「前橋ウィッチーズ」生徒 役 ほか</dd>
+      </dl>
+      <p class="note">出典：スターダストプロモーション公式プロフィール</p>
+    </div>
+
+    <div class="qcard section">
+      <h3>出演予定</h3>
+      <ul class="sched">
+        <li><time>10/25</time><span>イベント「VOICE in BOX Vol.20」</span></li>
+        <li><time>11/18–22</time><span>舞台「魔法歌劇アルマギア～The First Aria～」セシル 役</span></li>
+        <li><time>11/28–29</time><span>キミに贈る朗読会「ゴカンッ！ Vol.6」</span></li>
+        <li><time>12/13</time><span>朗読会「ミディアムブルーのおしゃべり読書会」</span></li>
+        <li><time>12/28</time><span>声優カラオケイベント『KoeLaLa Vol.5』</span></li>
+      </ul>
+      <p class="note">2026年10月25日時点の公式サイト掲載情報。最新情報は公式でご確認ください。</p>
+    </div>
+
+    <div class="links">
+      <a class="link" href="https://x.com/meina_hamakawa" target="_blank" rel="noopener"><span>公式X<small>@meina_hamakawa</small></span><span class="arr">↗</span></a>
+      <a class="link" href="https://www.stardust.co.jp/talent/voiceactor/hamakawameina/" target="_blank" rel="noopener"><span>公式プロフィール<small>スターダストプロモーション</small></span><span class="arr">↗</span></a>
+      <a class="link" href="https://stardust-va.com/actor/meina-hamakawa/" target="_blank" rel="noopener"><span>スターダスト声優部<small>stardust-va.com</small></span><span class="arr">↗</span></a>
+      <a class="link" href="https://x.com/stardust_va" target="_blank" rel="noopener"><span>スターダスト声優部 公式X<small>@stardust_va</small></span><span class="arr">↗</span></a>
+    </div>
+
+    <div class="share">
+      <a class="btn x" id="shareX" href="#" target="_blank" rel="noopener">結果を X でシェアする</a>
+      <button class="btn ghost" id="copyBtn" type="button">シェア文をコピー</button>
+      <p class="copied" id="copied"></p>
+      <button class="btn ghost" id="againBtn" type="button">もう一度診断する</button>
+    </div>
+  </section>
+
+  <footer>ファンが作った非公式の診断ゲームです。公式とは関係ありません。<br>プロフィール・出演情報の出典：スターダストプロモーション公式サイト</footer>
+</div>
+
+<script>
+(() => {
+  const SHARE_URL = "https://xilyy.github.io/seiyu-shindan/";
+  const $ = id => document.getElementById(id);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  // w: ゲージの揺れ幅（2ほど大きく動く）。質問内容と結果は関係なく、必ず濵川明那さんにたどり着く
+  const POOL = [
+    ["その声優さんは20代？", 1],
+    ["その声優さんは髪が長い？", 0],
+    ["その声優さんは、アイドル作品に出演している？", 1],
+    ["その声優さんは、歌手としても活動している？", 0],
+    ["その声優さんは、アニメで主人公を演じたことがある？", 0],
+    ["その声優さんは、ラジオ番組を持っている？", 2],
+    ["その声優さんは、関東出身？", 0],
+    ["その声優さんは、背が低め？", 1],
+    ["その声優さんは、声が高め？", 2],
+    ["その声優さんは、ソロライブをしたことがある？", 0],
+    ["その声優さんは、ユニットやグループに所属している？", 2],
+    ["その声優さんは、ゲームのキャラクターを演じている？", 0],
+    ["その声優さんは、楽器が弾ける？", 0],
+    ["その声優さんは、動物を飼っている？", 0],
+    ["その声優さんは、甘いものが好き？", 1],
+    ["その声優さんは、写真集を出したことがある？", 1],
+    ["その声優さんは、舞台にも出演している？", 0],
+    ["その声優さんは、生配信をよくしている？", 0],
+    ["その声優さんは、デビューして5年以内？", 0],
+    ["その声優さんは、妹キャラを演じることが多い？", 2],
+    ["その声優さんは、クールな役が似合う？", 1],
+    ["その声優さんは、名前に「な」が入っている？", 0],
+    ["その声優さんは、関西弁を話せる？", 2],
+    ["その声優さんは、料理が得意そう？", 0],
+    ["その声優さんは、ゲーム実況をしたことがある？", 0],
+    ["その声優さんは、ダンスが得意？", 2],
+    ["その声優さんは、テレビのバラエティ番組に出たことがある？", 0],
+    ["その声優さんは、朝型？", 2],
+    ["その声優さんの誕生日は春？", 2],
+    ["その声優さんは、雑誌の表紙を飾ったことがある？", 1],
+    ["その声優さんは、運動が得意そう？", 0],
+    ["その声優さんは、SNSの更新がまめ？", 0],
+    ["その声優さんは、お酒が好きそう？", 0],
+    ["その声優さんは、メガネキャラを演じたことがある？", 2],
+    ["その声優さんは、海外のイベントに出たことがある？", 0],
+    ["その声優さんは、アーティストデビューしている？", 1],
+    ["その声優さんは、事務所の先輩後輩と仲が良さそう？", 1],
+    ["その声優さんは、猫派？", 0],
+    ["その声優さんの代表作は、深夜アニメ？", 2],
+    ["その声優さんは、ナレーションの仕事もしている？", 0],
+    // w: 3 = 別の声優さんをズバリ当てにいく質問（ゲージが大きく動く）
+    ["その声優さんは、「ラブライブ！」シリーズに出演している？", 3],
+    ["その声優さんは、プリキュアに変身したことがある？", 3],
+    ["その声優さんは、「アイドルマスター」シリーズに出演している？", 3],
+    ["その声優さんは、「ウマ娘」に出演している？", 3],
+    ["その声優さんは、「鬼滅の刃」に出演している？", 3],
+    ["その声優さんは、ポケモンのアニメに出演している？", 3],
+    ["その声優さんは、ジブリ作品に出演したことがある？", 3],
+    ["その声優さんは、紅白歌合戦に出たことがある？", 3],
+    ["その声優さんは、声優アワードを受賞したことがある？", 3],
+    ["その声優さんは、日本武道館でソロライブをしたことがある？", 3],
+    ["その声優さんは、国民的アニメのレギュラーを担当している？", 3],
+    ["その声優さんは、ハリウッド映画の吹き替えをしている？", 3],
+    ["その声優さんは、ドラマや映画に俳優としても出ている？", 3],
+    ["その声優さんは、元アイドルグループのメンバー？", 3],
+    ["その声優さんは、芸歴20年以上？", 3],
+    ["その声優さんは、海外でも大人気？", 3],
+    ["その声優さんの名前は「さ」行から始まる？", 3],
+    ["その声優さんの名前は、ひらがなが入っている？", 3],
+    ["その声優さんは、カレーは甘口派？", 2],
+    ["その声優さんは、傘をよく忘れそう？", 2],
+    ["その声優さんは、UFOを見たことがありそう？", 2],
+    ["その声優さんは、寝起きがいい？", 1],
+    ["その声優さんは、ジェットコースターが平気？", 1],
+    ["その声優さんは、目玉焼きにしょうゆをかける派？", 2],
+    ["その声優さんは、方向音痴そう？", 1],
+    ["その声優さんは、夏より冬が好きそう？", 0],
+    ["その声優さんは、虫が苦手そう？", 2],
+    ["その声優さんは、宝くじが当たったら旅行に使いそう？", 1],
+    ["その声優さんは、雨の日が好きそう？", 1],
+    ["その声優さんは、早口言葉が得意？", 0],
+    ["その声優さんは、コンビニスイーツに詳しそう？", 0],
+    ["その声優さんは、朝ごはんはパン派？", 2],
+    ["その声優さんは、迷子になったことがありそう？", 2],
+  ];
+  const ANSWERS = [
+    { k: "yes", label: "そう", v: 1, mark: "◎" },
+    { k: "py", label: "部分的にそう", v: 0.6, mark: "○" },
+    { k: "mid", label: "どちらとも言えない", v: 0.3, mark: "−" },
+    { k: "pn", label: "部分的にそうではない", v: 0, mark: "△" },
+    { k: "no", label: "そうではない", v: -0.5, mark: "×" },
+  ];
+  const LINES = {
+    start: ["では始めるニャ。正直に答えるのニャ。", "水晶玉よ…答えを映すのニャ…"],
+    low: ["ふむ…まだ霧の中ニャ。", "むむむ…もう少しヒントがほしいニャ。", "なるほどニャ…メモメモ。"],
+    mid: ["ふむふむ、輪郭が見えてきたニャ。", "おや…水晶玉がほんのり光ってきたニャ。", "これは…だんだん近づいている気がするニャ。"],
+    high: ["もう喉まで出かかってるニャ…！", "水晶玉がピンクに光っている…！", "あと少し…あと少しニャ…！"],
+    big: ["こ、この気配は…！", "ピーンときたニャ！", "おおっ、一気に見えてきたニャ！"],
+    dip: ["むむっ…別の人の顔が浮かんできたニャ…", "あれれ…霧が濃くなってきたニャ…", "ちょっと待つニャ…考え直すニャ…"],
+    shock: ["そ、そんなはずは…！？", "えっ、違うのニャ！？ 計算が狂ったニャ…", "ぐぬぬ…手強いニャ…"],
+    snipe: ["ズバリ核心に迫ったニャ！", "その答え、待ってたニャ…！", "これは…かなり絞れてきたニャ！"],
+    miss: ["むっ…狙いが外れたニャ。", "ハズレたニャ…水晶玉を磨き直すニャ。", "その人じゃなかったかニャ…"],
+    retry: ["そんなはずはないニャ…！ もう少しだけ聞かせてほしいニャ。", "水晶玉が曇っていたのかニャ…？ 質問を続けるニャ。"],
+  };
+
+  let gauge = 0, q = 0, queue = [], cur = null, busy = false;
+
+  function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function show(view) { ["vStart", "vQ", "vResult"].forEach(v => $(v).hidden = v !== view); }
+  function say(text, mood) { $("say").textContent = text; if (mood) setMood(mood); }
+  function setMood(m) {
+    const s = $("seer"); s.dataset.mood = m;
+    if (m === "sweat" || m === "shock") { s.classList.remove("wobble"); void s.offsetWidth; s.classList.add("wobble"); }
+  }
+  function render(prev) {
+    const g = Math.round(gauge);
+    $("fill").classList.toggle("dip", prev !== undefined && gauge < prev);
+    $("fill").style.width = g + "%";
+    $("pct").textContent = g + "%";
+    $("track").classList.toggle("hot", g >= 80);
+    $("ballglow").setAttribute("opacity", (g / 100).toFixed(2));
+    const d = $("delta");
+    if (prev === undefined) { d.textContent = ""; d.className = "delta"; return; }
+    const diff = Math.round(gauge - prev);
+    d.textContent = diff > 0 ? "+" + diff : diff < 0 ? String(diff) : "±0";
+    d.className = "delta " + (diff >= 0 ? "up" : "down");
+    if (diff < 0) { const t = $("track"); t.classList.remove("shake"); void t.offsetWidth; t.classList.add("shake"); }
+  }
+  function nextQuestion() {
+    if (!queue.length) queue = shuffle(POOL);
+    cur = queue.pop();
+    $("qno").hidden = false;
+    $("qno").textContent = "Q." + (q + 1);
+    $("qlabel").textContent = "QUESTION " + String(q + 1).padStart(2, "0");
+    $("qtext").textContent = cur[0];
+    [...$("answers").children].forEach(b => b.disabled = false);
+    busy = false;
+  }
+  function answer(a) {
+    if (busy) return; busy = true;
+    [...$("answers").children].forEach(b => b.disabled = true);
+    q++;
+    const w = cur[1], prev = gauge;
+    let gain = 4 + a.v * (6 + 4 * w) + rand(-3, 4);
+    let line, mood = "think";
+    if (w === 3 && a.v >= 0.6) { gain = rand(13, 21) * a.v; line = pick(LINES.snipe); mood = "shock"; }
+    else if (w === 3 && a.v <= 0) { gain = -rand(4, 11); line = pick(LINES.miss); mood = "sweat"; }
+    else if (a.k === "no" && w === 2 && Math.random() < 0.6) { gain = -rand(4, 9); line = pick(LINES.shock); mood = "shock"; }
+    else if (q > 3 && gauge > 30 && gauge < 95 && Math.random() < 0.2) { gain = -rand(7, 15); line = pick(LINES.dip); mood = "sweat"; }
+    else if (gain >= 12 || (w === 2 && a.v >= 0.6 && Math.random() < 0.5)) { gain = Math.max(gain, 11) + rand(0, 4); line = pick(LINES.big); mood = "shock"; }
+    if (q >= 14) gain = Math.max(gain, 8);
+    gauge = Math.max(0, Math.min(q <= 5 ? 82 : 100, gauge + gain));
+    if (q > 5) { gauge = 100; line = "ピーン！！ どんな答えでも、もう全部わかったニャ！"; mood = "shock"; }
+    if (!line) line = gauge >= 75 ? pick(LINES.high) : gauge >= 40 ? pick(LINES.mid) : pick(LINES.low);
+    render(prev);
+    say(line, mood);
+    setTimeout(() => {
+      if (gauge >= 100) guess();
+      else { setMood("think"); nextQuestion(); }
+    }, gauge >= 100 ? 1100 : 650);
+  }
+  function guess() {
+    say("見えたニャ…！ もう聞くまでもないニャ！", "shock");
+    $("qno").hidden = true;
+    setTimeout(result, 900);
+  }
+  function shareText() {
+    const base = `【好きな女性声優診断メーカー】\n${q}問の質問で、ニャ魔人が見抜きました。\nわたしの好きな女性声優は… 濵川明那さん だと断言されました！\n#好きな女性声優診断 #濵川明那`;
+    return SHARE_URL ? base + "\n" + SHARE_URL : base;
+  }
+  function result() {
+    say("誰を思い浮かべていても、ワガハイの水晶玉に映るのはこの人ニャ！", "happy");
+    $("qcount").textContent = q + "問でひらめき100%に到達";
+    const r = $("reveal"); r.classList.remove("reveal"); void r.offsetWidth; r.classList.add("reveal");
+    $("gaugeWrap").hidden = true;
+    $("shareX").href = "https://x.com/intent/post?text=" + encodeURIComponent(shareText());
+    $("copied").textContent = "";
+    show("vResult");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function start() {
+    gauge = 0; q = 0; queue = shuffle(POOL);
+    $("gaugeWrap").hidden = false;
+    render();
+    say(pick(LINES.start), "think");
+    show("vQ");
+    nextQuestion();
+  }
+
+  ANSWERS.forEach(a => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ans"; b.dataset.k = a.k; b.id = "ans-" + a.k;
+    b.innerHTML = `<i aria-hidden="true">${a.mark}</i><span>${a.label}</span>`;
+    b.addEventListener("click", () => answer(a));
+    $("answers").appendChild(b);
+  });
+  $("startBtn").addEventListener("click", start);
+  $("againBtn").addEventListener("click", start);
+  $("copyBtn").addEventListener("click", () => {
+    const t = shareText();
+    const done = () => $("copied").textContent = "コピーしました";
+    try {
+      navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done));
+    } catch (e) { fallbackCopy(t, done); }
+  });
+  function fallbackCopy(t, done) {
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+    ta.remove();
+    $("copied").textContent = ok ? "コピーしました" : "コピーできませんでした。長押しで選択してください";
+    if (ok) done();
+  }
+})();
+</script>
+
+</body>
+</html>
